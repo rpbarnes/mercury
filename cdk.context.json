@@ -1,0 +1,59 @@
+{
+  "availability-zones:account=967773983593:region=us-east-2": [
+    "us-east-2a",
+    "us-east-2b",
+    "us-east-2c"
+  ],
+  "ami:account=967773983593:filters.image-type.0=machine:filters.name.0=amzn-ami-vpc-nat-*:filters.state.0=available:owners.0=amazon:region=us-east-2": "ami-0031d527521fcb961",
+  "vpc-provider:account=967773983593:filter.vpc-id=vpc-9bd042f0:region=us-east-2:returnAsymmetricSubnets=true": {
+    "vpcId": "vpc-9bd042f0",
+    "vpcCidrBlock": "172.31.0.0/16",
+    "availabilityZones": [],
+    "subnetGroups": [
+      {
+        "name": "Public",
+        "type": "Public",
+        "subnets": [
+          {
+            "subnetId": "subnet-88cb71e3",
+            "cidr": "172.31.0.0/20",
+            "availabilityZone": "us-east-2a",
+            "routeTableId": "rtb-70702b1b"
+          },
+          {
+            "subnetId": "subnet-79e91904",
+            "cidr": "172.31.16.0/20",
+            "availabilityZone": "us-east-2b",
+            "routeTableId": "rtb-70702b1b"
+          },
+          {
+            "subnetId": "subnet-70d1893c",
+            "cidr": "172.31.32.0/20",
+            "availabilityZone": "us-east-2c",
+            "routeTableId": "rtb-70702b1b"
+          }
+        ]
+      }
+    ]
+  },
+  "availability-zones:account=885674156826:region=us-east-2": [
+    "us-east-2a",
+    "us-east-2b",
+    "us-east-2c"
+  ],
+  "availability-zones:account=647368586117:region=us-east-2": [
+    "us-east-2a",
+    "us-east-2b",
+    "us-east-2c"
+  ],
+  "ami:account=885674156826:filters.image-type.0=machine:filters.name.0=amzn-ami-vpc-nat-*:filters.state.0=available:owners.0=amazon:region=us-east-2": "ami-0031d527521fcb961",
+  "hosted-zone:account=967773983593:domainName=api.prod.unwrap.ai:region=us-east-2": {
+    "Id": "/hostedzone/Z0790044D5J6QA87BGMM",
+    "Name": "api.prod.unwrap.ai."
+  },
+  "availability-zones:account=197786890596:region=us-east-2": [
+    "us-east-2a",
+    "us-east-2b",
+    "us-east-2c"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+    "extends": "@tsconfig/node14",
+    "include": ["stacks", "src", "src/**/*"],
+    "compilerOptions": {
+        "outDir": "dist/",
+        "esModuleInterop": true,
+        "lib": ["esnext"],
+        "strict": true
+    }
+}

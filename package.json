@@ -1,0 +1,45 @@
+{
+    "name": "unwrap-service",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "start": "AWS_PROFILE=creators sst start",
+        "build": "AWS_PROFILE=creators sst build",
+        "deploy": "AWS_PROFILE=creators sst deploy",
+        "remove": "AWS_PROFILE=creators sst remove",
+        "console": "AWS_PROFILE=creators sst console",
+        "typecheck": "tsc --noEmit",
+        "test": "AWS_PROFILE=creators sst load-config -- vitest run"
+    },
+    "eslintConfig": {
+        "extends": [
+            "serverless-stack"
+        ]
+    },
+    "devDependencies": {
+        "@serverless-stack/cli": "1.0.1",
+        "@serverless-stack/resources": "1.0.1",
+        "@tsconfig/node14": "^1.0.1",
+        "@types/aws-lambda": "^8.10.70",
+        "@types/fs-extra": "^9.0.13",
+        "@types/node": "16.11.33",
+        "aws-cdk-lib": "2.20.0",
+        "prettier": "2.6.2",
+        "puppeteer": "^17.1.3",
+        "ts-node": "10.7.0",
+        "ts-node-dev": "^1.1.8",
+        "typescript": "4.6.4"
+    },
+    "prettier": {
+        "trailingComma": "es5",
+        "tabWidth": 4,
+        "semi": true,
+        "singleQuote": true,
+        "printWidth": 160
+    },
+    "dependencies": {
+        "chrome-aws-lambda": "^10.1.0",
+        "puppeteer-core": "^17.1.3"
+    },
+    "prisma": {}
+}

@@ -1,0 +1,6 @@
+{
+    "python.formatting.provider": "black",
+    "js/ts.implicitProjectConfig.experimentalDecorators": true,
+    "plantuml.diagramsRoot": "docs/diagrams/src",
+    "plantuml.exportOutDir": "docs/diagrams/out"
+}
