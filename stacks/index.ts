@@ -5,9 +5,9 @@ import ScraperStack from './ScraperStack';
 export default function main(app: sst.App): void {
     // Set default runtime for all functions
     app.setDefaultFunctionProps({
-        runtime: 'nodejs12.x',
+        runtime: 'nodejs14.x',
     });
 
-    // const dbStack = new DbStack(app, 'db', {});
-    const scraper = new ScraperStack(app, 'scraper', {});
+    const db = new DbStack(app, 'db', {});
+    const scraper = new ScraperStack(app, 'scraper', { dbStack: db });
 }

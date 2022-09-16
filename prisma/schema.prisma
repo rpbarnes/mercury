@@ -1,0 +1,78 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+  binaryTargets   = ["native", "rhel-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model InstagramInfluencer {
+  id                    Int             @id @default(autoincrement())
+  userName              String          @unique(map: "userNameIndex") @db.VarChar(255)
+  lastUpdated           DateTime?       @default(now()) @map("_lastUpdated") @db.DateTime(0)
+  biography             String          @db.Text
+  followedBy            Int
+  following             Int
+  fullName              String          @db.VarChar(255)
+  isProfessionalAccount Boolean         @default(false)
+  business_email        String?         @db.VarChar(255)
+  categoryName          String?         @db.VarChar(255)
+  profilePicUrl         String          @db.Text
+  profilePicUrlHd       String          @db.Text
+  totalPosts            Int
+  externalLinkId        Int?
+  InfluencerLink        InfluencerLink? @relation(fields: [externalLinkId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "InstagramInfluencer_ibfk_1")
+  InstagramRaw          InstagramRaw?
+
+  @@index([externalLinkId], map: "externalLinkId")
+}
+
+model InfluencerLink {
+  id                  Int                   @id @default(autoincrement())
+  link                String                @unique(map: "link") @db.VarChar(255)
+  rawHtml             String                @db.LongText
+  email               String?               @db.VarChar(255)
+  emails              Json?
+  contactLink         String?               @db.Text
+  InstagramInfluencer InstagramInfluencer[]
+}
+
+model InstagramPost {
+  id                   Int                    @id @default(autoincrement())
+  postUrl              String                 @db.Text
+  likes                Int?
+  comments             Int?
+  views                Int?
+  isVideo              Boolean                @default(false)
+  takenAt              DateTime               @db.DateTime(0)
+  locationName         String?                @db.VarChar(255)
+  locationSlug         String?                @db.VarChar(255)
+  caption              String?                @db.Text
+  instagramId          String                 @unique(map: "instagramId") @db.VarChar(255)
+  InstagramPostHashtag InstagramPostHashtag[]
+}
+
+model InstagramCrawl {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique(map: "username") @db.VarChar(255)
+  crawledOn DateTime? @db.DateTime(0)
+}
+
+model InstagramPostHashtag {
+  id            Int           @id @default(autoincrement())
+  postId        Int
+  hashtag       String?       @db.VarChar(255)
+  InstagramPost InstagramPost @relation(fields: [postId], references: [id], onDelete: Cascade, map: "InstagramPostHashtag_ibfk_1")
+
+  @@unique([postId, hashtag], map: "postIdHashtag")
+}
+
+model InstagramRaw {
+  id                  Int                 @id @default(autoincrement())
+  userId              Int                 @unique(map: "userId")
+  rawPayload          Json?
+  InstagramInfluencer InstagramInfluencer @relation(fields: [userId], references: [id], onDelete: Cascade, map: "InstagramRaw_ibfk_1")
+}
