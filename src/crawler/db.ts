@@ -1,7 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 const secretJson = JSON.parse(process.env.DB_SECRET ?? '');
 
-const connString = `mysql://${secretJson.username || 'admin'}:${secretJson.password}@${process.env.DATABASE_URL}:3306/creator`;
+// const connString = `mysql://${secretJson.username || 'admin'}:${secretJson.password}@${process.env.DATABASE_URL}:3306/creator`;
+const connString =
+    'mysql://admin:8wVc^cSkJvm_NW0_dhC9um.sNQxPg-@dev-mercury-db-databaseinstance1844f58fd-mtmij5jqeezt.c6xjpykgtcfx.us-west-2.rds.amazonaws.com:3306/creator';
 
 export const db = new PrismaClient({
     datasources: {

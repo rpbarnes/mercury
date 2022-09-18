@@ -1,34 +1,52 @@
 import { InfluencerLink, InstagramInfluencer } from '@prisma/client';
+import { performance } from 'perf_hooks';
 import { ElementHandle, Page } from 'puppeteer-core';
 import { getBrowser } from './browser';
 import { db } from './db';
 import { ExternalLink, InstagramResponse } from './instagramTypes';
+import { userAgents } from './userAgents';
+import bluebird from 'bluebird';
 
-const agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36';
+const agent = userAgents[Math.floor(Math.random() * userAgents.length)];
 
 export const handler = async (event: any) => {
     let browser = await getBrowser();
     const toRequest = event.usernames as string[];
+    let isBlocked = false;
 
     try {
-        await Promise.allSettled(
-            toRequest.map(async (username) => {
+        const res = await bluebird.map(
+            toRequest,
+            async (username) => {
                 let page = await browser.newPage();
+                page.setDefaultNavigationTimeout(30000);
                 try {
+                    if (isBlocked) {
+                        await sleep(60 * 60 * 1000);
+                        isBlocked = false;
+                    }
                     await page.setUserAgent(agent);
                     await page.setExtraHTTPHeaders({
-                        accept: '*/*',
                         'accept-language': 'en-US,en;q=0.9',
+                        // cookie: 'csrftoken=LtVPkmbrjdPIKq9eYoAMiIiIW0z1h6jy; mid=YxjdmwAEAAH3UeCqF3A8eiKB17XE; ig_did=9C97E84B-8EE4-4EC6-A7C7-590A9F279EB0; ig_nrcb=1; datr=XuoZY7QfpLO9y8FiiwBi6AyV; dpr=2',
+                        // 'viewport-width': '1440',
                     });
 
+                    // sleep for random time up to 5 seconds
+                    await sleep(Math.random() * 5000);
+
                     const userInfo = await getInstagramUserInfo(page, username);
+                    if (!userInfo) {
+                        isBlocked = true;
+                        console.error('Could not load user for ', username);
+                    }
                     // if there's an external link call it - get html
                     let externalLinkInfo: ExternalLink | undefined = undefined;
-                    if (userInfo) {
-                        externalLinkInfo = await getExternalLink(page, userInfo);
-                        console.log(externalLinkInfo?.emails);
-                    }
-                    console.log('finished page nav', userInfo);
+                    // if (userInfo) {
+                    //     externalLinkInfo = await getExternalLink(page, userInfo);
+                    //     console.log(externalLinkInfo?.emails);
+                    // }
+                    // console.log('finished page nav');
 
                     // write external link to db - get db value
                     let externalLinkRecord: InfluencerLink | undefined = undefined;
@@ -56,7 +74,8 @@ export const handler = async (event: any) => {
                 } finally {
                     await page.close();
                 }
-            })
+            },
+            { concurrency: 1 }
         );
         await browser.close();
     } catch (error) {
@@ -69,17 +88,29 @@ export const handler = async (event: any) => {
 
     return 'whats up';
 };
+const sleep = async (ms: number): Promise<void> => {
+    console.log('sleeping for ', ms);
+    return await new Promise((resolve) => setTimeout(resolve, ms));
+};
 
 const getInstagramUserInfo = async (page: Page, username: string): Promise<InstagramResponse | undefined> => {
     const url = `https://www.instagram.com/${username}/?hl=en`;
     let userInfo: InstagramInfluencer | undefined = undefined;
 
     console.log('Navigating to page: ', url);
+    // page.on('request', (request) => {
+    //     if (request.isNavigationRequest() && request.redirectChain().length !== 0) {
+    //         console.log('being redirected');
+    //         request.abort();
+    //     } else {
+    //         request.continue();
+    //     }
+    // });
     page.on('response', async (response) => {
         try {
             const url: string = response.url();
             if (url.startsWith('https://i.instagram.com/api/v1/users/web_profile_info/?username=')) {
-                console.log(response.status(), 'status is');
+                console.log('status code: ', response.status());
                 if (response.request().method() === 'GET') {
                     const result = await response.json();
                     if (result && result.data) {
@@ -134,7 +165,7 @@ const getExternalLink = async (page: Page, userInfo: InstagramResponse): Promise
             //@ts-ignore
             contactUrl = await (await contactLink?.getProperty('href')).jsonValue();
             if (contactUrl) {
-                await page.goto(contactUrl, { waitUntil: 'networkidle0' });
+                await page.goto(contactUrl, { waitUntil: 'load' });
                 //@ts-ignore
                 const contactHtml = await page.evaluate(() => document.documentElement.outerHTML);
                 const contactEmails = extractEmails(contactHtml);
@@ -251,6 +282,7 @@ const writeInstagramUser = async (userInfo: InstagramResponse, externalLink: Inf
                 locationSlug: post.node.location?.slug,
                 caption: post.node.edge_media_to_caption.edges.length > 0 ? post.node.edge_media_to_caption.edges[0].node.text : '',
                 instagramId: post.node.id,
+                userId: influencer.id,
             };
         }),
         skipDuplicates: true,
@@ -303,3 +335,43 @@ const writeNextToExplore = async (userInfo: InstagramResponse): Promise<void> =>
         skipDuplicates: true,
     });
 };
+
+const getNextFiveToRun = async (): Promise<string[]> => {
+    const next = await db.instagramCrawl.findMany({
+        where: {
+            crawledOn: null,
+        },
+        select: {
+            username: true,
+        },
+        take: 100,
+    });
+    await Promise.allSettled(
+        next.map(async (value) => {
+            await db.instagramCrawl.update({
+                where: {
+                    username: value.username,
+                },
+                data: {
+                    crawledOn: new Date(),
+                },
+            });
+        })
+    );
+
+    return next.map((value) => value.username);
+};
+
+(async () => {
+    while (true) {
+        try {
+            const start = performance.now();
+            const nextToRun = await getNextFiveToRun();
+            console.log(nextToRun);
+            const response = await handler({ usernames: nextToRun });
+            console.log(`Completed in ${performance.now() - start}`);
+        } catch (err) {
+            console.log(err);
+        }
+    }
+})();

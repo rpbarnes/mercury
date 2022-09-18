@@ -25,6 +25,7 @@ model InstagramInfluencer {
   totalPosts            Int
   externalLinkId        Int?
   InfluencerLink        InfluencerLink? @relation(fields: [externalLinkId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "InstagramInfluencer_ibfk_1")
+  InstagramPost         InstagramPost[]
   InstagramRaw          InstagramRaw?
 
   @@index([externalLinkId], map: "externalLinkId")
@@ -52,7 +53,11 @@ model InstagramPost {
   locationSlug         String?                @db.VarChar(255)
   caption              String?                @db.Text
   instagramId          String                 @unique(map: "instagramId") @db.VarChar(255)
+  userId               Int?
+  InstagramInfluencer  InstagramInfluencer?   @relation(fields: [userId], references: [id], onDelete: Cascade, map: "InstagramPost_ibfk_1")
   InstagramPostHashtag InstagramPostHashtag[]
+
+  @@index([userId], map: "userId")
 }
 
 model InstagramCrawl {
